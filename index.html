@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body,div,ul,li{ margin: 0; padding: 0;}
+        #box{ color: #000; font-size: 20px; font-family: '宋体'; margin: 20px auto 0; width: 500px;}
+        #box ul{ overflow: hidden; padding: 0 3px 3px 0; background: #888888; width: 100%;}
+        #box li{ float: left; list-style: none; width: 47px; height: 47px; border: 3px double #000; margin: 0 -3px -3px 0; line-height: 47px; font-weight: bold; color: red; text-align: center; font-size: 35px;}
+        #box span{ display: block; line-height: 40px;}
+        #box i{ font-style: normal; color: blue;}
+        #box b{ color: red;}
+        #box .number{ background: #cccccc;}
+        #box .flag{ background: url("images/flag.jpg") no-repeat; background-size:47px 47px;}
+        #box .bomb{ background: url("images/bomb.jpg") no-repeat; background-size:47px 47px;}
+    </style>
+</head>
+<body>
+<div id="box" oncontextmenu="return false;">
+    <ul>
+
+    </ul>
+    <span>剩余<i></i>个旗子,总炸弹数<b>10</b></span>
+</div>
+
+<script>
+    var boxNode=document.getElementById('box');
+    var ul=boxNode.getElementsByTagName('ul')[0];
+    var iNode=boxNode.getElementsByTagName('i')[0];
+    var arr=[];
+    function box(row){
+        var col=10;
+        var frag=document.createDocumentFragment();
+        for(var i=0;i<col;i++){
+            arr[i]=[];
+            for(var j=0;j<row;j++){
+                arr[i][j]=false;
+                var li=document.createElement('li');
+                frag.appendChild(li);
+            }
+        }
+        ul.appendChild(frag);
+    }
+    box(10);
+    var num=10;
+    iNode.innerHTML=num;
+    for(var count=0;true;){//10个随机位置生成炸弹
+        var bombRowIndex=Math.floor(Math.random()*10);//10是行数
+        var bombColIndex=Math.floor(Math.random()*10);//10是列数
+        if(arr[bombColIndex][bombRowIndex]==false){//当该位置未标记时
+            arr[bombColIndex][bombRowIndex]=true;//true标记炸弹
+            count++;
+            if(count==10){
+                break;
+            }
+        }
+    }
+//    /*以下代码检验是否生成10个炸弹*/
+//    var list=ul.getElementsByTagName('li');
+//    for(var i=0;i<10;i++){
+//        for(var j=0;j<10;j++){
+//            if(arr[i][j]==true){
+//                list[j*10+i].innerHTML='bomb';
+//            }
+//        }
+//    }
+    var list=ul.getElementsByTagName('li');
+    //var col,row;
+    ul.onmousedown=function(e) {
+        var event = e || window.event;
+        //var target=event.target || event.srcElement;
+        var x = event.pageX - boxNode.offsetLeft;
+        var y = event.pageY - boxNode.offsetTop;
+        var col = Math.floor(x / 50);//点击处的列位置数
+        var row = Math.floor(y / 50);//点击处的行位置数
+        //console.log('前面的'+col,row);
+        //console.log(x,col,y,row);
+
+        if(list[row * 10 + col].className!=''&&event.which == 1){//点击处已经点击过（除了旗子）
+            return;
+        }
+        if (event.which == 1) {//鼠标左键点击
+            if (arr[col][row] == true) {//点击到炸弹
+                for (var i = 0; i < 10; i++) {//所有炸弹显示
+                    for (var j = 0; j < 10; j++) {
+                        if (arr[i][j] == true) {
+                            list[j * 10 + i].className = 'bomb';
+                        }
+                    }
+                }
+                return alert('你输了！请刷新页面重新游戏！');
+            }
+            else {//点击处不是炸弹
+                fun(list[row * 10 + col], col, row);
+            }
+        }
+        if (event.which == 3) {//鼠标右键单击
+            if(list[row * 10 + col].className == 'flag'){//已经标记过旗子，再次右键取消标记
+                list[row * 10 + col].className ='';
+                num++;
+            }
+            else if(list[row * 10 + col].className == ''){//没有标记过的地方，加上旗子标记
+                list[row * 10 + col].className = 'flag';
+                num--;
+            }
+            iNode.innerHTML = num;
+
+        }
+
+    }
+
+
+
+    function fun(obj,col,row) {
+        //console.log('后面的'+col,row);
+        var count = 0;
+        for (var i = col - 1; i <= col + 1; i++) {//统计周围的炸弹数
+            for (var j = row - 1; j <= row + 1; j++) {
+                if (i >= 0 && j >= 0) {//该二维数组存在
+                    if (arr[i] != null) {//一维数字可以找到
+                        if (arr[i][j] == true) {
+                            count++;
+                        }
+                    }
+                }
+            }
+        }
+        if (count == 0) {//没有雷
+            list[row * 10 + col].className = 'number';
+
+            for (var i = col - 1; i <= col + 1; i++) {
+                for (var j = row - 1; j <= row + 1; j++) {
+                    if (i >= 0 && j >= 0) {//该二维数组存在
+                        if (arr[i] != null) {//一维数字可以找到
+                            if (arr[i][j] != null) {//位置存在
+                                //console.log(11111);
+                                if ((i!=col||j!=row)&&list[j*10+i].className==''){//不是原来的点，并且没有标记过
+                                    //console.log(i,j);
+                                    fun(list[j * 10 + i],i,j);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+        else {//有雷
+            list[row * 10 + col].innerHTML = count;
+            list[row * 10 + col].className = 'number';
+        }
+
+    }
+    
+</script>
+</body>
+</html>
